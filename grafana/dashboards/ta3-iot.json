@@ -1,0 +1,611 @@
+{
+  "uid": "ta3-iot",
+  "title": "TA3 IoT — Grupo 00",
+  "tags": [
+    "TA3",
+    "IoT",
+    "UTP"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "schemaVersion": 39,
+  "version": 1,
+  "templating": {
+    "list": [
+      {
+        "name": "ubicacion",
+        "label": "Ubicación",
+        "type": "query",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "influxdb-ta3"
+        },
+        "query": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"iot\", tag: \"ubicacion\")",
+        "definition": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"iot\", tag: \"ubicacion\")",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": []
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Monitoreo IoT de Temperatura — Grupo 00\n**Herramientas de Desarrollo Profesional - TIC · UTP** &nbsp;|&nbsp; Flujo: DHT22 (simulado) → EMQX (MQTT) → Telegraf → InfluxDB → Grafana &nbsp;|&nbsp; Lectura cada 10 s"
+      }
+    },
+    {
+      "id": 2,
+      "type": "gauge",
+      "title": "Temperatura actual",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-ta3"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-ta3"
+          },
+          "query": "from(bucket: \"iot\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"dht22\" and r._field == \"temperatura\")\n  |> filter(fn: (r) => contains(value: r.ubicacion, set: ${ubicacion:json}))\n  |> last()\n  |> keep(columns: [\"_time\", \"_value\", \"ubicacion\"])"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "min": 10,
+          "max": 40,
+          "displayName": "${__field.labels.ubicacion}",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 18
+              },
+              {
+                "color": "orange",
+                "value": 26
+              },
+              {
+                "color": "red",
+                "value": 30
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdMarkers": true,
+        "showThresholdLabels": false
+      }
+    },
+    {
+      "id": 3,
+      "type": "gauge",
+      "title": "Humedad actual",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-ta3"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 3,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-ta3"
+          },
+          "query": "from(bucket: \"iot\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"dht22\" and r._field == \"humedad\")\n  |> filter(fn: (r) => contains(value: r.ubicacion, set: ${ubicacion:json}))\n  |> last()\n  |> keep(columns: [\"_time\", \"_value\", \"ubicacion\"])"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "humidity",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "displayName": "${__field.labels.ubicacion}",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 30
+              },
+              {
+                "color": "blue",
+                "value": 70
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdMarkers": true,
+        "showThresholdLabels": false
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Último dato hace",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-ta3"
+      },
+      "description": "Segundos desde la última lectura recibida. Si supera 30 s, el nodo dejó de publicar.",
+      "gridPos": {
+        "x": 16,
+        "y": 3,
+        "w": 4,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-ta3"
+          },
+          "query": "from(bucket: \"iot\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"dht22\" and r._field == \"temperatura\")\n  |> filter(fn: (r) => contains(value: r.ubicacion, set: ${ubicacion:json}))\n  |> group()\n  |> last()\n  |> map(fn: (r) => ({_time: r._time, _value: float(v: uint(v: now()) - uint(v: r._time)) / 1000000000.0}))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0,
+          "displayName": "Nodo",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 20
+              },
+              {
+                "color": "red",
+                "value": 30
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Lecturas en el periodo",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-ta3"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 3,
+        "w": 4,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-ta3"
+          },
+          "query": "from(bucket: \"iot\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"dht22\" and r._field == \"temperatura\")\n  |> filter(fn: (r) => contains(value: r.ubicacion, set: ${ubicacion:json}))\n  |> group()\n  |> count()"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "displayName": "Lecturas",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Temperatura en tiempo real (°C) — líneas: alerta 26 °C / crítico 30 °C",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-ta3"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-ta3"
+          },
+          "query": "from(bucket: \"iot\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"dht22\" and r._field == \"temperatura\")\n  |> filter(fn: (r) => contains(value: r.ubicacion, set: ${ubicacion:json}))\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"ubicacion\"])"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "displayName": "${__field.labels.ubicacion}",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": true,
+            "thresholdsStyle": {
+              "mode": "dashed"
+            },
+            "axisSoftMin": 18,
+            "axisSoftMax": 28
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 26
+              },
+              {
+                "color": "red",
+                "value": 30
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sala"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FF9830"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "laboratorio"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794F2"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "min",
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Humedad relativa en tiempo real (%)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-ta3"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-ta3"
+          },
+          "query": "from(bucket: \"iot\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"dht22\" and r._field == \"humedad\")\n  |> filter(fn: (r) => contains(value: r.ubicacion, set: ${ubicacion:json}))\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"ubicacion\"])"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "humidity",
+          "decimals": 1,
+          "displayName": "${__field.labels.ubicacion}",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": true,
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sala"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FF9830"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "laboratorio"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794F2"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "min",
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Últimas 20 lecturas",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-ta3"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-ta3"
+          },
+          "query": "from(bucket: \"iot\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"dht22\")\n  |> filter(fn: (r) => contains(value: r.ubicacion, set: ${ubicacion:json}))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group()\n  |> keep(columns: [\"_time\", \"ubicacion\", \"sensor\", \"temperatura\", \"humedad\"])\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 20)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "custom": {
+            "align": "center"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "_time": 0,
+              "ubicacion": 1,
+              "sensor": 2,
+              "temperatura": 3,
+              "humedad": 4
+            },
+            "renameByName": {
+              "_time": "Hora",
+              "ubicacion": "Ubicación",
+              "sensor": "Sensor",
+              "temperatura": "Temperatura (°C)",
+              "humedad": "Humedad (%)"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
